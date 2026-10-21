@@ -15,12 +15,16 @@ if (conteneur) {
   });
 
   conteneur.addEventListener("click", (event) => {
-    const carte = event.target.closest("article[data-id]");
-    if (!carte) return;
+    const carte = event.target.closest("article");
 
-    conteneur.querySelectorAll("article[data-id]").forEach((item) => {
-      item.classList.remove("ring-2", "ring-teal-600");
+    carte.classList.toggle("ring-2");
+    carte.classList.toggle("ring-teal-600");
+    
+    conteneur.querySelectorAll("article").forEach((item) => {
+      if (item !== carte) {
+        item.classList.remove("ring-2", "ring-teal-600");
+      }
     });
-    carte.classList.add("ring-2", "ring-teal-600");
+
   });
 }
