@@ -16,15 +16,22 @@ if (conteneur) {
 
   conteneur.addEventListener("click", (event) => {
     const carte = event.target.closest("article");
+    if (!carte) return;
+
+    const coursChoisi = cours.find((coursItem) => coursItem.id === carte.dataset.id);
+    if (!coursChoisi) return;
 
     carte.classList.toggle("ring-2");
     carte.classList.toggle("ring-teal-600");
-    
+
     conteneur.querySelectorAll("article").forEach((item) => {
       if (item !== carte) {
         item.classList.remove("ring-2", "ring-teal-600");
       }
     });
 
+    document.getElementById("selected-course-title").textContent = coursChoisi.nom;
+    document.getElementById("summary-course").textContent = coursChoisi.nom;
+    document.getElementById("summary-total").textContent = `${coursChoisi.prix} €`;
   });
 }
