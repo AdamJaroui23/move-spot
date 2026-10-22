@@ -5,12 +5,23 @@ const salleSection = document.querySelector('section[aria-labelledby="titre-sall
 if (conteneur) {
   let coursActuel = cours[0];
   let creneauActuel = coursActuel.creneaux[0];
-  const tapisSelectionnes = new Set(["C3"]);
+  const tapisSelectionnes = [];
+  const boutonReservation = document.getElementById("confirm-button");
   const espaceCoach = salleSection && salleSection.querySelector(".bg-slate-800");
   let tapisConteneur = document.getElementById("seats-container");
 
+  const mettreAJourBoutonReservation = () => {
+    if (boutonReservation) {
+      const desactive = tapisSelectionnes.length === 0;
+      boutonReservation.disabled = desactive;
+      boutonReservation.classList.toggle("cursor-not-allowed", desactive);
+      boutonReservation.classList.toggle("opacity-50", desactive);
+      boutonReservation.classList.toggle("hover:bg-teal-700", !desactive);
+    }
+  };
+
   const mettreAJourRecapitulatif = () => {
-    const emplacements = [...tapisSelectionnes];
+    const emplacements = tapisSelectionnes;
     document.getElementById("summary-seats").textContent =
       emplacements.length ? emplacements.join(", ") : "—";
     document.getElementById("summary-count").textContent =
@@ -36,7 +47,7 @@ if (conteneur) {
       for (let numero = 1; numero <= tapisParRangee; numero += 1) {
         const id = `${rangee}${numero}`;
         const estOccupe = tapisOccupes.has(id);
-        const estSelectionne = tapisSelectionnes.has(id) && !estOccupe;
+        const estSelectionne = tapisSelectionnes.includes(id) && !estOccupe;
         const tapis = document.createElement("button");
 
         tapis.type = "button";
@@ -101,7 +112,7 @@ if (conteneur) {
 
       coursActuel = coursChoisi;
       creneauActuel = coursChoisi.creneaux[0];
-      tapisSelectionnes.clear();
+      tapisSelectionnes.length = 0;
       coursSelectionnes.forEach(function (c) {
         c.classList.remove("ring-2", "ring-teal-600");
       });
@@ -115,12 +126,14 @@ if (conteneur) {
         `${coursChoisi.creneaux[0].jour} ${coursChoisi.creneaux[0].heure}`;
       afficherTapis(creneauActuel);
       mettreAJourRecapitulatif();
+      mettreAJourBoutonReservation();
     });
   });
 
   afficherCreneaux(cours[0]);
   afficherTapis(creneauActuel);
   mettreAJourRecapitulatif();
+  mettreAJourBoutonReservation();
 
   creneauxConteneur.addEventListener("click", function (event) {
     const button = event.target.closest("button[data-id]");
@@ -132,7 +145,7 @@ if (conteneur) {
     if (!creneau) return;
 
     creneauActuel = creneau;
-    tapisSelectionnes.clear();
+    tapisSelectionnes.length = 0;
     creneauxConteneur.querySelectorAll("button[data-id]").forEach(function (b) {
       b.classList.remove("border-teal-600", "bg-teal-600", "text-white");
       b.classList.add("border-slate-300", "bg-white", "text-slate-800");
@@ -143,6 +156,7 @@ if (conteneur) {
       `${creneau.jour} ${creneau.heure}`;
     afficherTapis(creneauActuel);
     mettreAJourRecapitulatif();
+    mettreAJourBoutonReservation();
   });
 
   if (tapisConteneur) {
@@ -150,14 +164,24 @@ if (conteneur) {
       const tapis = event.target.closest("button[data-id]");
       if (!tapis || tapis.disabled) return;
 
-      if (tapisSelectionnes.has(tapis.dataset.id)) {
-        tapisSelectionnes.delete(tapis.dataset.id);
+      const index = tapisSelectionnes.indexOf(tapis.dataset.id);
+      if (index !== -1) {
+        tapisSelectionnes.splice(index, 1);
       } else {
-        tapisSelectionnes.add(tapis.dataset.id);
+        tapisSelectionnes.push(tapis.dataset.id);
       }
 
+      calculateTotal();
+      mettreAJourBoutonReservation();
       afficherTapis(creneauActuel);
       mettreAJourRecapitulatif();
     });
   }
+
+  function calculateTotal() {
+    const total = coursActuel.prix * tapisSelectionnes.length;
+    document.getElementById("summary-total").textContent = `${total} €`;
+  }
+
+  
 }
