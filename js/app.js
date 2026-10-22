@@ -1,8 +1,64 @@
 const conteneur = document.getElementById("courses-container");
 const creneauxConteneur = document.getElementById("slots-container");
+const salleSection = document.querySelector('section[aria-labelledby="titre-salle"]');
 
 if (conteneur) {
   let coursActuel = cours[0];
+  let creneauActuel = coursActuel.creneaux[0];
+  const tapisSelectionnes = new Set(["C3"]);
+  const espaceCoach = salleSection && salleSection.querySelector(".bg-slate-800");
+  let tapisConteneur = document.getElementById("seats-container");
+
+  const mettreAJourRecapitulatif = () => {
+    const emplacements = [...tapisSelectionnes];
+    document.getElementById("summary-seats").textContent =
+      emplacements.length ? emplacements.join(", ") : "—";
+    document.getElementById("summary-count").textContent =
+      String(emplacements.length);
+    document.getElementById("summary-total").textContent =
+      `${coursActuel.prix * emplacements.length} €`;
+  };
+
+  if (!tapisConteneur && espaceCoach) {
+    tapisConteneur = document.createElement("div");
+    tapisConteneur.id = "seats-container";
+    tapisConteneur.className = "mx-auto grid max-w-md grid-cols-6 gap-2";
+    espaceCoach.after(tapisConteneur);
+  }
+
+  const afficherTapis = (creneau) => {
+    if (!tapisConteneur) return;
+
+    const tapisOccupes = new Set(creneau.occupes);
+    tapisConteneur.innerHTML = "";
+
+    rangees.forEach((rangee) => {
+      for (let numero = 1; numero <= tapisParRangee; numero += 1) {
+        const id = `${rangee}${numero}`;
+        const estOccupe = tapisOccupes.has(id);
+        const estSelectionne = tapisSelectionnes.has(id) && !estOccupe;
+        const tapis = document.createElement("button");
+
+        tapis.type = "button";
+        tapis.dataset.id = id;
+        tapis.className = estOccupe
+          ? "seat h-11 rounded-lg text-xs font-semibold transition cursor-not-allowed bg-slate-300 text-slate-500"
+          : estSelectionne
+          ? "seat h-11 rounded-lg text-xs font-semibold transition bg-teal-600 text-white shadow"
+          : "seat h-11 rounded-lg text-xs font-semibold transition border border-slate-300 bg-white text-slate-700 hover:border-teal-600";
+        tapis.disabled = estOccupe;
+        tapis.setAttribute(
+          "aria-label",
+          `Tapis ${id} ${
+            estOccupe ? "occupé" : estSelectionne ? "sélectionné" : "libre"
+          }`
+        );
+        tapis.setAttribute("aria-pressed", String(estSelectionne));
+        tapis.textContent = id;
+        tapisConteneur.appendChild(tapis);
+      }
+    });
+  };
 
   const afficherCreneaux = (coursChoisi) => {
     if (!creneauxConteneur) return;
@@ -12,11 +68,10 @@ if (conteneur) {
         (creneau, index) => `
           <button
             type="button"
-            class="rounded-xl border px-4 py-2 text-sm font-medium transition ${
-              index === 0
-                ? "border-teal-600 bg-teal-600 text-white"
-                : "border-slate-300 bg-white text-slate-800 hover:border-teal-600"
-            }"
+            class="rounded-xl border px-4 py-2 text-sm font-medium transition ${index === 0
+            ? "border-teal-600 bg-teal-600 text-white"
+            : "border-slate-300 bg-white text-slate-800 hover:border-teal-600"
+          }"
             data-id="${creneau.id}"
           >
             ${creneau.jour} <span class="font-normal">${creneau.heure}</span>
@@ -45,6 +100,8 @@ if (conteneur) {
       if (!coursChoisi) return;
 
       coursActuel = coursChoisi;
+      creneauActuel = coursChoisi.creneaux[0];
+      tapisSelectionnes.clear();
       coursSelectionnes.forEach(function (c) {
         c.classList.remove("ring-2", "ring-teal-600");
       });
@@ -56,10 +113,14 @@ if (conteneur) {
       afficherCreneaux(coursChoisi);
       document.getElementById("summary-slot").textContent =
         `${coursChoisi.creneaux[0].jour} ${coursChoisi.creneaux[0].heure}`;
+      afficherTapis(creneauActuel);
+      mettreAJourRecapitulatif();
     });
   });
 
   afficherCreneaux(cours[0]);
+  afficherTapis(creneauActuel);
+  mettreAJourRecapitulatif();
 
   creneauxConteneur.addEventListener("click", function (event) {
     const button = event.target.closest("button[data-id]");
@@ -70,6 +131,8 @@ if (conteneur) {
     );
     if (!creneau) return;
 
+    creneauActuel = creneau;
+    tapisSelectionnes.clear();
     creneauxConteneur.querySelectorAll("button[data-id]").forEach(function (b) {
       b.classList.remove("border-teal-600", "bg-teal-600", "text-white");
       b.classList.add("border-slate-300", "bg-white", "text-slate-800");
@@ -78,5 +141,23 @@ if (conteneur) {
     button.classList.remove("border-slate-300", "bg-white", "text-slate-800");
     document.getElementById("summary-slot").textContent =
       `${creneau.jour} ${creneau.heure}`;
+    afficherTapis(creneauActuel);
+    mettreAJourRecapitulatif();
   });
+
+  if (tapisConteneur) {
+    tapisConteneur.addEventListener("click", function (event) {
+      const tapis = event.target.closest("button[data-id]");
+      if (!tapis || tapis.disabled) return;
+
+      if (tapisSelectionnes.has(tapis.dataset.id)) {
+        tapisSelectionnes.delete(tapis.dataset.id);
+      } else {
+        tapisSelectionnes.add(tapis.dataset.id);
+      }
+
+      afficherTapis(creneauActuel);
+      mettreAJourRecapitulatif();
+    });
+  }
 }
