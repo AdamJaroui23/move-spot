@@ -183,5 +183,13 @@ if (conteneur) {
     document.getElementById("summary-total").textContent = `${total} €`;
   }
 
-  
+  if (boutonReservation) {
+    boutonReservation.addEventListener("click", function () {
+      if (tapisSelectionnes.length === 0) return;
+      alert(
+        `Réservation confirmée pour le cours "${coursActuel.nom}" le ${creneauActuel.jour} à ${creneauActuel.heure}.\nTapis réservés : ${tapisSelectionnes.join(", ")}.\nTotal : ${coursActuel.prix * tapisSelectionnes.length} €.`
+      );
+    });
+  }
+
 }
